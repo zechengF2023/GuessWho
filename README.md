@@ -64,7 +64,7 @@ An Example User:
 
 ## Site map
 
-[list sitemap](wireframes/site_map.png)
+![sitemap](wireframes/site_map.png)
 
 ## User Stories or Use Cases
 
