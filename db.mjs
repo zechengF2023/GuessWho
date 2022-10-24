@@ -1,8 +1,7 @@
 import mongoose from "mongoose";
 import * as dotenv from 'dotenv' 
 dotenv.config()
-
-const conn=mongoose.createConnection(`mongodb+srv://Guo:${process.env.DB_PW}@cluster0.yougi.mongodb.net/GuessWhoDB?retryWrites=true&w=majority`);
+const conn=mongoose.createConnection(process.env.DB_CONNECTION_STR);
 //user schema
 const UserSchema=new mongoose.Schema({
     name: {type:String,required: true},

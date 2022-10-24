@@ -68,8 +68,8 @@ An Example User:
 ## Research Topics
 * (6 points) React.js
   * I'm going to use React.js as my frontend framework
-* (3 points) Unit testing
-  * I'm going to conduct unit testing with Mocha
+* (3 points) Configuration Management
+  * I'm going to hide credentials using dotenv
 9 points total out of 8 required points
 ## [Link to Initial Main Project File](app.mjs) 
 
