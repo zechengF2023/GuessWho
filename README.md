@@ -2,52 +2,36 @@ The content below is an example project proposal / requirements document. Replac
 
 (__TODO__: your project name)
 
-# Shoppy Shoperson 
+# Guess Who 
 
 ## Overview
 
-(__TODO__: a brief one or two paragraph, high-level description of your project)
-
-Remembering what to buy at the grocery store is waaaaay too difficult. Also, shopping for groceries when you're hungry leads to regrettable purchases. Sooo... that's where Shoppy Shoperson comes in!
-
-Shoppy Shoperson is a web app that will allow users to keep track of multiple grocery lists. Users can register and login. Once they're logged in, they can create or view their grocery list. For every list that they have, they can add items to the list or cross off items.
-
+This project is an online multiplayer game suitable for party. A group of players will be prompted with questions about themselves. Their answers will then be gathered and displayed back on the screen for others to guess. Those successfully figure out the writer will score, and after several rounds, the player with the highest score wins!
 
 ## Data Model
 
-(__TODO__: a description of your application's data and their relationships to each other) 
+The application will store Questions and Users. 
+* questions will have fields "content"
+* users will have fields "username", "hash", "wins", and "friends"(a list of users)
 
-The application will store Users, Lists and Items
+An Example Question: 
 
-* users can have multiple lists (via references)
-* each list can have multiple items (by embedding)
-
-(__TODO__: sample documents)
+```javascript
+{
+  content: "How old are you"
+}
+```
 
 An Example User:
 
 ```javascript
 {
-  username: "shannonshopper",
+  username: "Guo",
   hash: // a password hash,
-  lists: // an array of references to List documents
+  wins: //number of wins,
+  friends: // an array of references to User documents
 }
 ```
-
-An Example List with Embedded Items:
-
-```javascript
-{
-  user: // a reference to a User object
-  name: "Breakfast foods",
-  items: [
-    { name: "pancakes", quantity: "9876", checked: false},
-    { name: "ramen", quantity: "2", checked: true},
-  ],
-  createdAt: // timestamp
-}
-```
-
 
 ## [Link to Commented First Draft Schema](db.mjs) 
 
@@ -56,6 +40,9 @@ An Example List with Embedded Items:
 ## Wireframes
 
 (__TODO__: wireframes for all of the pages on your site; they can be as simple as photos of drawings or you can use a tool like Balsamiq, Omnigraffle, etc.)
+
+/home - home page
+![list home](wireframes/home.png)
 
 /list/create - page for creating a new shopping list
 
