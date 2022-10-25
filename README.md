@@ -23,7 +23,7 @@ An Example User:
 ```javascript
 {
   username: "Guo",
-  hash: // a password hash,
+  password: // a password hash,
   wins: //number of wins,
 }
 ```

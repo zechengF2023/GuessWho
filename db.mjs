@@ -18,4 +18,4 @@ const QuestionSchema=new mongoose.Schema({
 mongoose.model("Question", QuestionSchema);
 const Question=mongoose.model("Question");
 
-mongoose.connection.close();
+conn.close();
