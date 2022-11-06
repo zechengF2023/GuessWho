@@ -28,7 +28,7 @@ An Example User:
 }
 ```
 
-## [Link to Commented First Draft Schema](db.mjs) 
+## [Link to Commented First Draft Schema](./backend/db.mjs) 
 
 ## Wireframes
 
@@ -71,7 +71,7 @@ An Example User:
 * (3 points) Configuration Management
   * I'm going to hide credentials using dotenv
 * 9 points total out of 8 required points
-## [Link to Initial Main Project File](app.mjs) 
+## [Link to Initial Main Project File](./backend/app.mjs) 
 
 ## Annotations / References Used
 
