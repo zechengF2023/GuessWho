@@ -1,0 +1,26 @@
+/* header+footer=20vh */
+
+#headerBar{
+    display:flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 14vh;
+}
+
+#headerGameName{
+    align-self: center;
+    height: 7vh;
+}
+
+#headerIcons{
+    display: flex;
+    flex-direction: row;
+    padding-left: 80vw;
+    padding-right: 10vw;
+    width: 10vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid black;
+    height: 7vh;
+}

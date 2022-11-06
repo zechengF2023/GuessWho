@@ -1,0 +1,32 @@
+#helpPageContent{
+    display:flex;
+    flex-direction: column;
+    height: 80vh;
+    margin-left: 3vw;
+}
+
+#breadCrumbs{
+    margin-top: 2vh;
+    margin-bottom: 2vh;
+}
+
+#helpPageHeader{
+    align-self:center;
+}
+#helpQuestions{
+    width: 50vw;
+    margin-bottom: 2vh;
+}
+#helpQuestionTitle{margin-top: 0;}
+#helpPageUserFeedback{
+    width: 50vw;
+}
+#helpMessageContent{
+    display:flex;
+    flex-direction: row;
+    align-items: center;
+}
+#helpSubmitBtn{
+    margin-top: 2vh;
+    margin-left: 1vw;
+}

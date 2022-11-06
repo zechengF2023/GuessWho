@@ -1,0 +1,11 @@
+#footerDiv{
+    width: 100vw;
+    height: 6vh;
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border: solid 1px black;
+}
+.footerButton{
+    width: 50%;
+}
