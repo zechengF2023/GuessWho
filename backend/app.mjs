@@ -47,6 +47,7 @@ io.on("connection", (socket)=>{
         if(io.sockets.adapter.rooms.get(roomNum)){
             socket.emit("joinRoom", 1);
             socket.join(roomNum.toString());
+            io.to(roomNum).emit("updatePlayerNum", io.sockets.adapter.rooms.get(roomNum).size);
             console.log("join successful");
         }
         else{
