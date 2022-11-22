@@ -74,10 +74,6 @@ io.on("connection", (socket)=>{
         //TODO: decide if last player
         removeRoom(roomArr, roomNumber);
         console.log("Exited. Current rooms are:",io.sockets.adapter.rooms);
-        // socket.leave(roomNumber, ()=>{
-        //     removeRoom(roomArr, roomNumber);
-        //     console.log("Exited. Current rooms are:",io.sockets.adapter.rooms);
-        // });
     })
     socket.on("disconnect", ()=>{
         socket.leave(socket.rooms);

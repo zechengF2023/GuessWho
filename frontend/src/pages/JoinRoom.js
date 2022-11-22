@@ -1,4 +1,3 @@
-//ask the backend for a room number.
 import "../css/JoinRoom.css"
 import {myTheme} from "../components/Theme"
 import HeaderBar from "../components/HeaderBar"

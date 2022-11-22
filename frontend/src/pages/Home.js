@@ -26,7 +26,6 @@ function Home(){
         socket.on("getRoomNumber", (roomNumber)=>{
             setCookies("room", roomNumber);
             navigate("/createRoom",{state:{roomNumber}});
-            // alert("Maximum room number reached. Please try again later...")
         })
     }
     const joinRoom=()=>{
