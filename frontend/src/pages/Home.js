@@ -6,20 +6,27 @@ import FooterBar from "../components/FooterBar"
 import { ThemeProvider } from '@mui/material/styles';
 import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
-import { io } from "socket.io-client";
 import {SocketContext} from "../context/socket"
+import { useCookies } from 'react-cookie';
 
+//TODO: if multiple pages exist on the same browser, close previous sockets?
 function Home(){
     const socket=useContext(SocketContext);
+    const [cookies, setCookies]=useCookies(["room"]);
+    //if current in a room: exit the room and set room to null
+    if(cookies.room){
+        console.log("trying to exit");
+        socket.emit("exitRoom", cookies.room);
+        setCookies("room", null);
+    }
     const navigate=useNavigate();
     const createRoom=async()=>{
         //backend create a room number. -1 if no available room
         socket.emit("getRoomNumber","");
         socket.on("getRoomNumber", (roomNumber)=>{
-            if(roomNumber!=-1){
-                navigate("/createRoom",{state:{roomNumber}});
-            }
-            else{alert("Maximum room number reached. Please try again later...")}
+            setCookies("room", roomNumber);
+            navigate("/createRoom",{state:{roomNumber}});
+            // alert("Maximum room number reached. Please try again later...")
         })
     }
     const joinRoom=()=>{

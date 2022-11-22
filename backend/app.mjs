@@ -20,27 +20,33 @@ const io=new Server(server,{cors: {
     methods: ["GET", "POST"]
 }});
 
-//TODO: modify addRoom algorithm
-const addRoom=(roomArr)=>{
-    if(roomArr.length>1){return -1;}
-    else{
-        const newRoomNum=1234;
-        roomArr.push(newRoomNum);
-        return newRoomNum.toString();
+//generate a different random four-digit number as a string
+const generateRoom=(roomArr)=>{
+    while(1){
+        let num="";
+        for(let i=0;i<4;i++){
+            num+=(Math.floor(Math.random()*10)).toString();
+        }
+        if(!(num in roomArr)){
+            roomArr.push(num);
+            return num;
+        }
     }
 }
-const roomArr=[]; //[socketRoomNum, roomNum];
+
+//remove room from roomArr
+const removeRoom=(roomArr, roomNum)=>{
+    roomArr.splice(roomArr.indexOf(roomNum), 1);
+}
+
+const roomArr=[]; 
 io.on("connection", (socket)=>{
     //when creating game room, create a room and add the socket to it
     socket.on("getRoomNumber", ()=>{
-        let roomNum=addRoom(roomArr)
-        if(roomNum==-1){socket.emit("getRoomNumber",-1);}
-        else{
-            socket.join(roomNum);
-            socket.leave(socket.id);
-            socket.emit("getRoomNumber", roomNum);
-            console.log("rooms:", socket.rooms);
-        }
+        let roomNum=generateRoom(roomArr);
+        socket.join(roomNum);
+        console.log("Room created. Current rooms are:",io.sockets.adapter.rooms);
+        socket.emit("getRoomNumber", roomNum);
     })
     socket.on("joinRoom", (roomNum)=>{
         //if room exists: join the room, broadcast the player number
@@ -55,11 +61,27 @@ io.on("connection", (socket)=>{
             console.log("join failed");
         }
     })
+    socket.on("getPlayerNum",(roomNum)=>{
+        socket.emit("getPlayerNum", io.sockets.adapter.rooms.get(roomNum)?.size);
+    })
     socket.on("updatePlayerNum", (roomNum)=>{
         socket.emit("updatePlayerNum", io.sockets.adapter.rooms.get(roomNum).size);
     })
+    socket.on("exitRoom", (roomNumber)=>{
+        socket.leave(roomNumber,()=>{
+           console.log("left room.");
+        });
+        //TODO: decide if last player
+        removeRoom(roomArr, roomNumber);
+        console.log("Exited. Current rooms are:",io.sockets.adapter.rooms);
+        // socket.leave(roomNumber, ()=>{
+        //     removeRoom(roomArr, roomNumber);
+        //     console.log("Exited. Current rooms are:",io.sockets.adapter.rooms);
+        // });
+    })
     socket.on("disconnect", ()=>{
         socket.leave(socket.rooms);
+        console.log("Disconnected. Current rooms are:",io.sockets.adapter.rooms);
     })
 
 })

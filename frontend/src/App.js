@@ -5,9 +5,11 @@ import CreateRoom from "./pages/CreateRoom"
 import JoinRoom from "./pages/JoinRoom"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import {SocketContext, socket} from './context/socket';
+import { Cookies, CookiesProvider } from "react-cookie";
 
 function App() {
   return (
+    <CookiesProvider>
     <SocketContext.Provider value={socket}>
     <Router>
       <Routes>
@@ -18,6 +20,7 @@ function App() {
       </Routes>
     </Router>
     </SocketContext.Provider>
+    </CookiesProvider>
   );
 }
 

@@ -8,10 +8,12 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Button from '@mui/material/Button';
 import { io } from "socket.io-client";
+import { useCookies } from "react-cookie";
 
 function JoinRoom(){
     const navigate=useNavigate();
     const [roomNumber, setRoomNumber]=useState("");
+    const [cookies, setCookies]=useCookies(["room"]);
     const enterNumber=(evt)=>{
         setRoomNumber(evt.target.value.replace(/\D/g, ''));
     }
@@ -20,7 +22,10 @@ function JoinRoom(){
         const socket=io(`${process.env.REACT_APP_BACKEND}`);
         socket.emit("joinRoom", roomNumber);
         socket.on("joinRoom", (res)=>{
-            if(res){navigate("/createRoom",{state:{roomNumber}});}
+            if(res){
+                setCookies("room", roomNumber);
+                navigate("/createRoom",);
+            }
             else{alert("The room no longer exists.")}
         })
     }
