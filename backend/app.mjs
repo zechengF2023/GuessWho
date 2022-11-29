@@ -20,30 +20,67 @@ const io=new Server(server,{cors: {
     methods: ["GET", "POST"]
 }});
 
+//game class
+class Game{
+    constructor(creator, roomNumber){
+        this.roomNumber=roomNumber;
+        this.players=[creator]; //an array of player names
+        this.scores={}; //a dictionary, keys are names, values are scores
+        this.scores[creator]=0;
+        this.state="w"; //w--waiting, a--answering, g--guessing, e--ending
+        this.time=0; //timer
+    }
+    addPlayer(name){
+        players.push(name);
+        scores[name]=0;
+    }
+    removePlayer(name){
+        let idxToRemove=players.indexOf(name);
+        players.splice(idxToRemove, 1);
+        delete scores[name];
+    }
+}
+
+const generateName=(nameCounter, nameArr)=>{
+    const newName="player"+nameCounter;
+    nameArr.push(newName);
+    return newName;
+}
+
 //generate a different random four-digit number as a string
-const generateRoom=(roomArr)=>{
+const generateRoom=(roomDic)=>{
     while(1){
         let num="";
         for(let i=0;i<4;i++){
             num+=(Math.floor(Math.random()*10)).toString();
         }
-        if(!(num in roomArr)){
-            roomArr.push(num);
+        if(roomDic.getOwnProeprtyNames && (num in roomDic.getOwnPropertyNames)){
+            continue;
+        }
+        else{
+            roomDic[num]={};
             return num;
         }
     }
 }
 
-//remove room from roomArr
-const removeRoom=(roomArr, roomNum)=>{
-    roomArr.splice(roomArr.indexOf(roomNum), 1);
+//remove room from roomDic
+const removeRoom=(roomDic, roomNum)=>{
+    delete roomDic[roomNum];
 }
 
-const roomArr=[]; 
+let userCounter=0; //used to create username
+const usernameArr=[]; 
+const roomDic={}; //key is roomNum string, value is a Game object
+
 io.on("connection", (socket)=>{
+    socket.on("getUsername", ()=>{
+        socket.emit("getUsername", generateName(userCounter,usernameArr));
+        userCounter++;
+    })
     //when creating game room, create a room and add the socket to it
     socket.on("getRoomNumber", ()=>{
-        let roomNum=generateRoom(roomArr);
+        let roomNum=generateRoom(roomDic);
         socket.join(roomNum);
         console.log("Room created. Current rooms are:",io.sockets.adapter.rooms);
         socket.emit("getRoomNumber", roomNum);
@@ -67,12 +104,23 @@ io.on("connection", (socket)=>{
     socket.on("updatePlayerNum", (roomNum)=>{
         socket.emit("updatePlayerNum", io.sockets.adapter.rooms.get(roomNum).size);
     })
+    socket.on("startGameRequest", (roomNum)=>{
+        
+    })
+
+    socket.on("removeUsername", (username)=>{
+        const idxToRemove=usernameArr.indexOf(username);
+        usernameArr.splice(idxToRemove,1);
+    })
     socket.on("exitRoom", (roomNumber)=>{
+        if(io.sockets.adapter.rooms.get(roomNumber)?.size==1){
+            removeRoom(roomDic, roomNumber);
+        }
         socket.leave(roomNumber,()=>{
            console.log("left room.");
         });
         //TODO: decide if last player
-        removeRoom(roomArr, roomNumber);
+        
         console.log("Exited. Current rooms are:",io.sockets.adapter.rooms);
     })
     socket.on("disconnect", ()=>{

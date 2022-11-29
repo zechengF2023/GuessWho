@@ -7,21 +7,26 @@ import { ThemeProvider } from '@mui/material/styles';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import { useState } from "react"
+import { useState, useContext } from "react"
+import { SocketContext } from "../context/socket";
+
 
 const GamePage=()=>{
-    //TODO:
+    //TODO: handle soket disconnection, user access directly
+    const socket=useContext(SocketContext);
     const playerArr=["player1", "player2", "player3"];
-    const playerInfo={"player1":3, "player2":4, "player3":10};
+    const [playerScores, setPlayerScores]=useState({"player1":3, "player2":4, "player3":10});
     const [input, setInput]=useState("");
     const [selection, setSelection]=useState("");
-    const [isGuessing, toGuessPhase]=useState(true); //represent answering or guessing phase of the game
+    const [phase, setPhase]=useState("waiting"); //represent waiting, answering or guessing phase of the game
+    const [question, setQuestion]=useState("What is your favorite cat?");
+    const [answerToGuess, setAnswerToGuess]=useState("My favorite cat is Jiujiu cat.");
     const handleInput = (event) => {
         if(event.target.value.length<180){
             setInput(event.target.value);
         }
         else{
-            alert("Reached maximum character limit.")
+            alert("Reached maximum character count.")
         }
     };
     const changeSelection=(evt)=>{
@@ -37,8 +42,6 @@ const GamePage=()=>{
             </div>
         )
     }
-    const question="What is your favorite cat?";
-    const answerToDisplay="My favorite cat is Jiujiu cat."
     const submitAnswer=()=>{
     }
     return (
@@ -46,9 +49,10 @@ const GamePage=()=>{
         <div id="gameView">
             <div id="gameViewSideBar">
                 <p>Scores:</p>
-                {playerArr.map((name, idx)=>(SideBarPlayerDiv(name, playerInfo[name], idx)))}
+                {playerArr.map((name, idx)=>(SideBarPlayerDiv(name, playerScores[name], idx)))}
             </div>
-            {!isGuessing && <div id="gameAnsweringView">
+            {phase==="answering" && 
+            <div id="gameAnsweringView">
                 <p>{"Question: "+question}</p>
                 <TextField
                     id="gameInput"
@@ -60,10 +64,10 @@ const GamePage=()=>{
                 />
                 <Button variant="contained" size="large" color="myColor"  style={{fontWeight:"bold", marginTop:"20px"}} onClick={submitAnswer}>Send</Button>
             </div>}
-            {isGuessing &&
+            {phase==="guessing" &&
             <div id="gameGuessingView">
                 <p>Guess who wrote this:</p>
-                <p style={{color:"#808008", fontSize:"larger"}}>{answerToDisplay}</p>
+                <p style={{color:"#808008", fontSize:"larger"}}>{answerToGuess}</p>
                 <div id="gamePlayerSelectionDiv">
                     <p>Please choose one of the players:</p>
                     <RadioGroup
@@ -73,7 +77,6 @@ const GamePage=()=>{
                     >
                     {playerArr.map(name=>(<FormControlLabel value={name} control={<Radio />} label={name} />))}
                     </RadioGroup>
-                    
                 </div>
             </div>}
         </div>

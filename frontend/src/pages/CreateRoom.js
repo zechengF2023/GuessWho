@@ -17,36 +17,41 @@ function CreateRoom(){
     const roomNumber=cookies.room;
     const [playerNum, setPlayerNum]=useState(null);
     const navigate=useNavigate();
-    console.log("page rendered");
+    //prevent user direct access and validate room exists. 
     useEffect(()=>{
         if(location.state==null){
             alert("Please create or join a room.");
             navigate("/");
         }
-        //validate socket connection
         else if(!cookies.room){
             alert("The room has been closed.");
             navigate("/");
         }
     },[location.room, location.state])
-    
-    // if(!socket.connected){
-    //     alert("Connection lost. Reconnecting...")
-    // }
+    //validate socket connection
+    useEffect(()=>{
+        if(location.state && !socket.connected){
+            alert("Connection lost. Reconnecting...")
+        }
+    },[socket])
     
     //only requesting player number on first render
     useEffect(()=>{
-        console.log("sending request");
-        socket.emit("getPlayerNum", roomNumber);
-    },[])  
+        // if(socket.connected && location.state){
+            console.log("sending request");
+            socket.emit("getPlayerNum", roomNumber);
+        // }
+    },[socket]);
     socket.on("getPlayerNum", (playerNumber)=>{
-        if(playerNumber!==playerNum){
-            setPlayerNum(playerNumber)
-        }
+        console.log("received: ", playerNumber);
+        setPlayerNum(playerNumber)
     });
     socket.on("updatePlayerNum",(playerNumber)=>{if(playerNumber!==playerNum){setPlayerNum(playerNumber)}});
+    socket.on("startGame", ()=>{});
     const startGame=async()=>{
-        
+        console.log(typeof(cookies.room));
+        // socket.emit("startGameRequest", cookies.room);
+        // navigate("/game");
     }
     return (
         <ThemeProvider theme={myTheme}>

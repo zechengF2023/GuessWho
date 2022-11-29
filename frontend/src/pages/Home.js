@@ -5,26 +5,37 @@ import Button from '@mui/material/Button';
 import FooterBar from "../components/FooterBar"
 import { ThemeProvider } from '@mui/material/styles';
 import { useNavigate } from "react-router-dom";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import {SocketContext} from "../context/socket"
 import { useCookies } from 'react-cookie';
 
 //TODO: if multiple pages exist on the same browser, close previous sockets?
 function Home(){
     const socket=useContext(SocketContext);
-    const [cookies, setCookies]=useCookies(["room"]);
-    //if current in a room: exit the room and set room to null
-    if(cookies.room){
-        console.log("trying to exit");
-        socket.emit("exitRoom", cookies.room);
-        setCookies("room", null);
-    }
+    const [cookies, setCookie, removeCookie]=useCookies(null);
     const navigate=useNavigate();
+    useEffect(()=>{
+        //get username
+        if(!cookies.username){
+            socket.emit("getUsername");
+        }
+        //if current in a room: exit the room and set room to null
+        if(cookies.room){
+            socket.emit("exitRoom", cookies.room);
+            removeCookie("room");
+        }
+    },[])
+    socket.on("getUsername", (name)=>{
+        console.log(name);
+        setCookie("username", name);
+    });
     const createRoom=async()=>{
         //backend create a room number. -1 if no available room
-        socket.emit("getRoomNumber","");
+        socket.emit("getRoomNumber");
+
+        //TODO: send username...
         socket.on("getRoomNumber", (roomNumber)=>{
-            setCookies("room", roomNumber);
+            setCookie("room", roomNumber);
             navigate("/createRoom",{state:{roomNumber}});
         })
     }
@@ -34,7 +45,7 @@ function Home(){
     return (
         <ThemeProvider theme={myTheme}>
         <div id="homePageView">
-            <HeaderBar></HeaderBar>
+            <HeaderBar username={cookies.username}></HeaderBar>
             <div id="homeCenterDiv">
                 <div id="homeContentDiv">
                     <div id="homeButtonsDiv">

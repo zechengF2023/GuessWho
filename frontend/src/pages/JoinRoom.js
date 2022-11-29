@@ -16,6 +16,7 @@ function JoinRoom(){
     const enterNumber=(evt)=>{
         setRoomNumber(evt.target.value.replace(/\D/g, ''));
     }
+    
     //send number to backend for validation, navigate to room if success
     const joinRoom=async()=>{
         const socket=io(`${process.env.REACT_APP_BACKEND}`);

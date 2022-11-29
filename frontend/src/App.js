@@ -6,8 +6,14 @@ import JoinRoom from "./pages/JoinRoom"
 import GamePage from "./pages/GamePage"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import {SocketContext, socket} from './context/socket';
-import { Cookies, CookiesProvider } from "react-cookie";
+import { useCookies, CookiesProvider } from "react-cookie";
+
 function App() {
+  const [cookies, setCookie, removeCookie]=useCookies(null);
+  window.addEventListener("beforeunload", (evt) =>{
+    socket.emit("removeUsername", cookies.username);
+    removeCookie("username");
+  });
   return (
     <CookiesProvider>
     <SocketContext.Provider value={socket}>
