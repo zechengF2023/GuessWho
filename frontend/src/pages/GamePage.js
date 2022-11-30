@@ -18,9 +18,10 @@ const GamePage=()=>{
     const [playerScores, setPlayerScores]=useState({"player1":3, "player2":4, "player3":10});
     const [input, setInput]=useState("");
     const [selection, setSelection]=useState("");
-    const [phase, setPhase]=useState("waiting"); //represent waiting, answering or guessing phase of the game
+    const [phase, setPhase]=useState("answering"); //represent waiting, answering or guessing phase of the game
     const [question, setQuestion]=useState("What is your favorite cat?");
     const [answerToGuess, setAnswerToGuess]=useState("My favorite cat is Jiujiu cat.");
+    const [time, setTime]=useState(0);
     const handleInput = (event) => {
         if(event.target.value.length<180){
             setInput(event.target.value);
@@ -43,9 +44,19 @@ const GamePage=()=>{
         )
     }
     const submitAnswer=()=>{
+
     }
+
+    //sockets:
+    socket.on("setQuestion", question=>{setQuestion(question);})
+    socket.on("setTimer",time=>{setTime(time);})
+    socket.on("setPhase", phase=>{setPhase(phase);})
     return (
         <ThemeProvider theme={myTheme}>
+        <div id="timer">
+            <p>Timer:</p>
+            <p>{time+" seconds"}</p>
+        </div>
         <div id="gameView">
             <div id="gameViewSideBar">
                 <p>Scores:</p>

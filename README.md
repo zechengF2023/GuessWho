@@ -70,7 +70,9 @@ An Example User:
   * I'm going to use React.js as my frontend framework
 * (3 points) Configuration Management
   * I'm going to hide credentials using dotenv
-* 9 points total out of 8 required points
+* (1 point) Material UI frontend library
+  * I'm going to improve the layout using MUI
+* 10 points total out of 10 required points
 ## [Link to Initial Main Project File](./backend/app.mjs) 
 
 ## Annotations / References Used

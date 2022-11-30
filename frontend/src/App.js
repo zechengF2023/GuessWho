@@ -7,13 +7,22 @@ import GamePage from "./pages/GamePage"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import {SocketContext, socket} from './context/socket';
 import { useCookies, CookiesProvider } from "react-cookie";
+import { useBeforeunload } from 'react-beforeunload';
 
 function App() {
   const [cookies, setCookie, removeCookie]=useCookies(null);
+  //if user closes the tab:
+  // useBeforeunload((evt)=>{
+  //   socket.emit("tabClose", {username: cookies.username, roomNum: cookies.room});
+  //   removeCookie("username");
+  //   removeCookie("room");
+  // });
   window.addEventListener("beforeunload", (evt) =>{
-    socket.emit("removeUsername", cookies.username);
+    socket.emit("tabClose", {username: cookies.username, roomNum: cookies.room});
     removeCookie("username");
+    removeCookie("room");
   });
+
   return (
     <CookiesProvider>
     <SocketContext.Provider value={socket}>

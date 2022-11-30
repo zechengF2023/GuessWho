@@ -10,13 +10,20 @@ import Button from '@mui/material/Button';
 import { SocketContext } from "../context/socket";
 import { useCookies } from "react-cookie";
 
+
+//-------------------IMPORTANT-------------------
+//ASSUME clients will always remain connected. Otherwise they will need to rejoin the room.
 function CreateRoom(){
     const socket=useContext(SocketContext);
     const location=useLocation();
-    const [cookies, setCookies]=useCookies(["room"]);
+    const [cookies, setCookie]=useCookies(null);
     const roomNumber=cookies.room;
     const [playerNum, setPlayerNum]=useState(null);
     const navigate=useNavigate();
+    const startGame=()=>{
+        console.log(socket);
+        socket.emit("startGameRequest", cookies.room);
+    }
     //prevent user direct access and validate room exists. 
     useEffect(()=>{
         if(location.state==null){
@@ -31,28 +38,23 @@ function CreateRoom(){
     //validate socket connection
     useEffect(()=>{
         if(location.state && !socket.connected){
-            alert("Connection lost. Reconnecting...")
+            alert("Connection lost. Please join the room again.")
+            navigate("/");
         }
     },[socket])
     
     //only requesting player number on first render
     useEffect(()=>{
-        // if(socket.connected && location.state){
-            console.log("sending request");
+        if(socket.connected && location.state){
             socket.emit("getPlayerNum", roomNumber);
-        // }
+        }
     },[socket]);
-    socket.on("getPlayerNum", (playerNumber)=>{
-        console.log("received: ", playerNumber);
-        setPlayerNum(playerNumber)
-    });
-    socket.on("updatePlayerNum",(playerNumber)=>{if(playerNumber!==playerNum){setPlayerNum(playerNumber)}});
-    socket.on("startGame", ()=>{});
-    const startGame=async()=>{
-        console.log(typeof(cookies.room));
-        // socket.emit("startGameRequest", cookies.room);
-        // navigate("/game");
-    }
+    socket.on("getPlayerNum", (playerNumber)=>{setPlayerNum(playerNumber)});
+    socket.on("updatePlayerNum",(playerNumber)=>{setPlayerNum(playerNumber)});
+    socket.on("startGame", ()=>{
+        console.log("received");
+        navigate("/game");
+    })
     return (
         <ThemeProvider theme={myTheme}>
         <div id="createPageView">
@@ -66,7 +68,7 @@ function CreateRoom(){
                         <p className="myText">{playerNum}</p>
                     </div>
                     <Button variant="contained" color="myColor" size="large" className="homeButton" style={{fontWeight:"bold", marginTop:"50px"}} onClick={startGame}>Start</Button>
-                </div> 
+                </div>
             </div>
             <FooterBar></FooterBar>
         </div>

@@ -12,7 +12,7 @@ import { useCookies } from "react-cookie";
 function JoinRoom(){
     const navigate=useNavigate();
     const [roomNumber, setRoomNumber]=useState("");
-    const [cookies, setCookies]=useCookies(["room"]);
+    const [cookies, setCookie]=useCookies(null);
     const enterNumber=(evt)=>{
         setRoomNumber(evt.target.value.replace(/\D/g, ''));
     }
@@ -20,11 +20,11 @@ function JoinRoom(){
     //send number to backend for validation, navigate to room if success
     const joinRoom=async()=>{
         const socket=io(`${process.env.REACT_APP_BACKEND}`);
-        socket.emit("joinRoom", roomNumber);
+        socket.emit("joinRoom", {username:cookies.username, roomNum:roomNumber});
         socket.on("joinRoom", (res)=>{
             if(res){
-                setCookies("room", roomNumber);
-                navigate("/createRoom",);
+                setCookie("room", roomNumber, {sameSite:"none", secure:true});
+                navigate("/createRoom",{state:{roomNumber}});
             }
             else{alert("The room no longer exists.")}
         })

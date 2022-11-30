@@ -19,7 +19,7 @@ function Home(){
         if(!cookies.username){
             socket.emit("getUsername");
         }
-        //if current in a room: exit the room and set room to null
+        //if current in a room: exit the room and set cookies.room to null
         if(cookies.room){
             socket.emit("exitRoom", cookies.room);
             removeCookie("room");
@@ -27,15 +27,13 @@ function Home(){
     },[])
     socket.on("getUsername", (name)=>{
         console.log(name);
-        setCookie("username", name);
+        setCookie("username", name, {sameSite:"none", secure:true});
     });
     const createRoom=async()=>{
-        //backend create a room number. -1 if no available room
-        socket.emit("getRoomNumber");
-
-        //TODO: send username...
-        socket.on("getRoomNumber", (roomNumber)=>{
-            setCookie("room", roomNumber);
+        //backend create a room number. 
+        socket.emit("createRoom", cookies.username);
+        socket.on("createRoomResponse", (roomNumber)=>{
+            setCookie("room", roomNumber, {sameSite:"none", secure:true});
             navigate("/createRoom",{state:{roomNumber}});
         })
     }
