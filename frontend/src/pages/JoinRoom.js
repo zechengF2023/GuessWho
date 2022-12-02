@@ -23,8 +23,8 @@ function JoinRoom(){
         socket.emit("joinRoom", {username:cookies.username, roomNum:roomNumber});
         socket.on("joinRoom", (res)=>{
             if(res){
-                setCookie("room", roomNumber, {sameSite:"none", secure:true});
-                navigate("/createRoom",{state:{roomNumber}});
+                setCookie("room", roomNumber);
+                navigate("/waitingroom",{state:{roomNumber}});
             }
             else{alert("The room no longer exists.")}
         })

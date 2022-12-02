@@ -1,13 +1,12 @@
 import './App.css';
 import Home from "./pages/Home"
 import Help from "./pages/Help"
-import CreateRoom from "./pages/CreateRoom"
+import WaitingRoom from "./pages/WaitingRoom"
 import JoinRoom from "./pages/JoinRoom"
 import GamePage from "./pages/GamePage"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import {SocketContext, socket} from './context/socket';
 import { useCookies, CookiesProvider } from "react-cookie";
-import { useBeforeunload } from 'react-beforeunload';
 
 function App() {
   const [cookies, setCookie, removeCookie]=useCookies(null);
@@ -17,11 +16,11 @@ function App() {
   //   removeCookie("username");
   //   removeCookie("room");
   // });
-  window.addEventListener("beforeunload", (evt) =>{
-    socket.emit("tabClose", {username: cookies.username, roomNum: cookies.room});
-    removeCookie("username");
-    removeCookie("room");
-  });
+  // window.addEventListener("beforeunload", (evt) =>{
+  //   socket.emit("tabClose", {username: cookies.username, roomNum: cookies.room});
+  //   removeCookie("username");
+  //   removeCookie("room");
+  // });
 
   return (
     <CookiesProvider>
@@ -30,7 +29,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home/>}/>
         <Route path="/help" element={<Help/>}/>
-        <Route path="/createRoom" element={<CreateRoom/>}></Route>
+        <Route path="/waitingroom" element={<WaitingRoom/>}></Route>
         <Route path="/join" element={<JoinRoom/>}></Route>
         <Route path="/game" element={<GamePage/>}></Route>
       </Routes>

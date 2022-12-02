@@ -13,18 +13,14 @@ import { useCookies } from "react-cookie";
 
 //-------------------IMPORTANT-------------------
 //ASSUME clients will always remain connected. Otherwise they will need to rejoin the room.
-function CreateRoom(){
+function WaitingRoom(){
     const socket=useContext(SocketContext);
     const location=useLocation();
     const [cookies, setCookie]=useCookies(null);
     const roomNumber=cookies.room;
-    const [playerNum, setPlayerNum]=useState(null);
+    const [playerNames, setPlayerNames]=useState([]);
     const navigate=useNavigate();
-    const startGame=()=>{
-        console.log(socket);
-        socket.emit("startGameRequest", cookies.room);
-    }
-    //prevent user direct access and validate room exists. 
+    //prevent direct access and validate room exists. 
     useEffect(()=>{
         if(location.state==null){
             alert("Please create or join a room.");
@@ -34,7 +30,7 @@ function CreateRoom(){
             alert("The room has been closed.");
             navigate("/");
         }
-    },[location.room, location.state])
+    },[cookies.room, location.state])
     //validate socket connection
     useEffect(()=>{
         if(location.state && !socket.connected){
@@ -46,15 +42,15 @@ function CreateRoom(){
     //only requesting player number on first render
     useEffect(()=>{
         if(socket.connected && location.state){
-            socket.emit("getPlayerNum", roomNumber);
+            socket.emit("getPlayer", roomNumber);
         }
     },[socket]);
-    socket.on("getPlayerNum", (playerNumber)=>{setPlayerNum(playerNumber)});
-    socket.on("updatePlayerNum",(playerNumber)=>{setPlayerNum(playerNumber)});
-    socket.on("startGame", ()=>{
-        console.log("received");
-        navigate("/game");
-    })
+    const startGame=()=>{
+        socket.emit("startGameRequest", cookies.room);
+    }
+    socket.on("getPlayer", (playerNames)=>{setPlayerNames(playerNames)});
+    socket.on("updatePlayer",(playerNames)=>{setPlayerNames(playerNames)});
+    socket.on("startGame", ()=>{navigate("/game", {state:{playerNames}});})
     return (
         <ThemeProvider theme={myTheme}>
         <div id="createPageView">
@@ -64,8 +60,8 @@ function CreateRoom(){
                     <p className="myText">Your room number is:</p>
                     <p className="myText">{roomNumber}</p>
                     <div id="createPlayerNumDiv">
-                        <p className="myText" style={{alignSelf:"flex-start"}}>Number of players in the room:</p>
-                        <p className="myText">{playerNum}</p>
+                        <p className="myText" style={{alignSelf:"flex-start"}}>{playerNames.length+(playerNames.length>1? " players": " player")+" in the room:"}</p>
+                        <p className="myText">{playerNames.reduce((str, name)=>{return str+name+" "},"")}</p>
                     </div>
                     <Button variant="contained" color="myColor" size="large" className="homeButton" style={{fontWeight:"bold", marginTop:"50px"}} onClick={startGame}>Start</Button>
                 </div>
@@ -76,4 +72,4 @@ function CreateRoom(){
     )
 }
 
-export default CreateRoom;
+export default WaitingRoom;

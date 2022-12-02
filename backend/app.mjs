@@ -23,12 +23,15 @@ const io=new Server(server,{cors: {
 
 //data storage
 let userCounter=0; //used to create username
-const usernameArr=[]; //store all active usernames
+const usernameDic={}; //store all active usernames as {socket:username}
+const socket_Room_Dic={}; //store socket_id: roomNum. purpose: to remove user from the game instance when disconnect. 
 const roomDic={}; //key is roomNum string, value is a Game object
 
-const generateName=(nameCounter, nameArr)=>{
+//create a unique username and add to usernameDic.
+//return the username created.
+const addUsername=(nameCounter, usernameDic, socket)=>{
     const newName="player"+nameCounter;
-    nameArr.push(newName);
+    usernameDic[socket.id]=newName;
     return newName;
 }
 
@@ -52,10 +55,9 @@ const generateRoom=function(roomDic,username){
 
 //takes 3 arguments: username, roomNum, socket
 //delete the user everywhere
-const removeUsr=function(roomDic, usernameArr, io, username, roomNum, socket){
-    //remove from usernameArr
-    const idxToRemove=usernameArr.indexOf(username);
-    if(idxToRemove!=-1){usernameArr.splice(idxToRemove,1);}
+const removeUsr=function(roomDic, usernameDic, io, username, roomNum, socket){
+    //remove from usernameDic
+    delete usernameDic[socket.id];
     //remove from the Game instance(if the Game instance exists)
     roomDic[roomNum]?.removePlayer()
     //if the room exists
@@ -72,7 +74,7 @@ const removeUsr=function(roomDic, usernameArr, io, username, roomNum, socket){
         }
     }
     socket.leave(roomNum);
-}.bind(null, roomDic, usernameArr, io);
+}.bind(null, roomDic, usernameDic, io);
 
 //take 1 arg: roomNum
 //remove room from roomDic
@@ -80,18 +82,26 @@ const removeRoom=function(roomDic, roomNum){
     delete roomDic[roomNum];
 }.bind(null, roomDic)
 
+//send "updatePlayerNum" and "updatePlayer" signals to all clients in the room
+const updatePlayerF=function (io, socket, roomNum){
+    socket.emit("updatePlayer", roomDic[roomNum].players);
+}
 
 io.on("connection", (socket)=>{
-    socket.leave(socket.id);
+    const updatePlayer=updatePlayerF.bind(null, io, socket);
+    socket.leave(socket.id); //each socket is only in one room
     //------------------------- handle creating/joining room --------------------------------
+    //return username if the client doesn't have a valid one, otherwise return null
     socket.on("getUsername", ()=>{
-        socket.emit("getUsername", generateName(userCounter,usernameArr));
+        //name is valid if socket.id is in usernameDic.
+        socket.emit("getUsername", socket.id in usernameDic ? null:addUsername(userCounter,usernameDic,socket));
         userCounter++;
     })
     //when creating game room, create a room and add the socket to it
     socket.on("createRoom", (creatorName)=>{
         let roomNum=generateRoom(creatorName); 
         socket.join(roomNum);
+        socket_Room_Dic[socket.id]=roomNum;
         console.log("Room created. Current rooms are:",io.sockets.adapter.rooms);
         socket.emit("createRoomResponse", roomNum);
     })
@@ -99,10 +109,12 @@ io.on("connection", (socket)=>{
         const {username, roomNum}=req;
         //if room exists: join the room, broadcast the player number
         if(io.sockets.adapter.rooms.get(roomNum)){
-            socket.emit("joinRoom", 1);
             socket.join(roomNum.toString());
-            io.to(roomNum).emit("updatePlayerNum", io.sockets.adapter.rooms.get(roomNum).size);
+            socket_Room_Dic[socket.id]=roomNum;
             roomDic[roomNum].addPlayer(username);
+            socket.emit("joinRoom", 1);
+            updatePlayer(roomNum);
+            // io.to(roomNum).emit("updatePlayerNum", io.sockets.adapter.rooms.get(roomNum).size);
             console.log("Join successful. Current rooms are",io.sockets.adapter.rooms );
         }
         else{
@@ -110,54 +122,59 @@ io.on("connection", (socket)=>{
             console.log("join failed");
         }
     })
-    socket.on("getPlayerNum",(roomNum)=>{
-        socket.emit("getPlayerNum", io.sockets.adapter.rooms.get(roomNum)?.size);
+    socket.on("getPlayer",(roomNum)=>{
+        updatePlayer(roomNum);
     })
-    socket.on("updatePlayerNum", (roomNum)=>{
-        socket.emit("updatePlayerNum", io.sockets.adapter.rooms.get(roomNum).size);
+    socket.on("updatePlayer", (roomNum)=>{
+        updatePlayer(roomNum);
     })
 
     //------------------------- handle game process --------------------------------
     socket.on("startGameRequest", (roomNum)=>{
-        console.log(io);
-        io.to(roomNum).emit("startGame");
+        socket.broadcast.to(roomNum).emit('startGame');
+        socket.emit('startGame');
+        // io.of("/").in(roomNum).emit("startGame");
         const room=roomDic[roomNum];
-        room.startGame();
+        room.startGame(3, socket);
     })
-    socket.on("answer", (req)=>{
+
+    socket.on("answer", async(req)=>{
         const {roomNum, username, answer}=req;
         const game=roomDic[roomNum];
-        game.answers[game.questionNum][username]=answer;
+        //use mutex to protect answers
+        await game.answersMutex.acquire();
+        game.answers[game.questionCount][username]=answer;
+        game.answersMutex.release();
     })
-
-
-
-
-
-
-    
+    socket.on("guess", async(req)=>{
+        const {roomNum, username, guess}=req;
+        const game=roomDic[roomNum];
+        await game.guessesMutex.acquire();
+        game.guesses[game.questionCount][username]=guess;
+        game.guessesMutex.release();
+    })
 
     //------------------------- handle user exiting --------------------------------
     //remove username, remove room if it is the last player
     socket.on("tabClose", (req)=>{
-        console.log("received!");
-        console.log(socket);
         const {username, roomNum}=req;
         removeUsr(username,roomNum,socket);
     })
     //if user has a room stored in cookie at homepage before creating/joining a room: exit that room
-    socket.on("exitRoom", (roomNum)=>{
-        //remove player from Game instance
-        roomDic[roomNum]?.removePlayer();
+    socket.on("exitRoom", ()=>{
+        //remove player from Game instance and socket_Room_Dic.
+        const roomNum=socket_Room_Dic[socket.id];
+        delete socket_Room_Dic[socket.id];
+        roomDic[roomNum]?.removePlayer(usernameDic[socket.id]);
         //if the room exists
-        if(io.sockets.adapter.rooms.get(roomNum)?.size==1){
+        if(io.sockets.adapter.rooms.get(roomNum)){
             //if no player left in the room, remove it
             if(io.sockets.adapter.rooms.get(roomNum)?.size==1){
                 removeRoom(roomNum);
             }
             //if still players in the room, broadcast to update player number
             else{
-                io.to(roomNum).emit("updatePlayerNum", io.sockets.adapter.rooms.get(roomNum).size);
+                updatePlayer(roomNum);
             }
         }
         socket.leave(roomNum);
@@ -165,7 +182,22 @@ io.on("connection", (socket)=>{
     })
     //IMPORTANT: users will need to join the room again if disconnected.
     socket.on("disconnect", ()=>{
-        socket.leave(socket.rooms);
+        //remove player from Game instance, socket_Room_Dic, and usernameDic.
+        const roomNum=socket_Room_Dic[socket.id];
+        delete socket_Room_Dic[socket.id];
+        roomDic[roomNum]?.removePlayer(usernameDic[socket.id]);
+        delete usernameDic[socket.id];
+        //if the room exists
+        if(io.sockets.adapter.rooms.get(roomNum)){
+            //if no player left in the room, remove it
+            if(io.sockets.adapter.rooms.get(roomNum)?.size==1){
+                removeRoom(roomNum);
+            }
+            //if still players in the room, broadcast to update player number
+            else{
+                updatePlayer(roomNum);
+            }
+        }
         console.log("Disconnected. Current rooms are:",io.sockets.adapter.rooms);
     })
 })

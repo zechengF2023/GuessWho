@@ -15,10 +15,8 @@ function Home(){
     const [cookies, setCookie, removeCookie]=useCookies(null);
     const navigate=useNavigate();
     useEffect(()=>{
-        //get username
-        if(!cookies.username){
-            socket.emit("getUsername");
-        }
+        //check if username if valid
+        socket.emit("getUsername", cookies.username);
         //if current in a room: exit the room and set cookies.room to null
         if(cookies.room){
             socket.emit("exitRoom", cookies.room);
@@ -26,15 +24,15 @@ function Home(){
         }
     },[])
     socket.on("getUsername", (name)=>{
-        console.log(name);
-        setCookie("username", name, {sameSite:"none", secure:true});
+        // backend will return a name if current one is invalid
+        if(name)setCookie("username", name);
     });
     const createRoom=async()=>{
         //backend create a room number. 
         socket.emit("createRoom", cookies.username);
         socket.on("createRoomResponse", (roomNumber)=>{
-            setCookie("room", roomNumber, {sameSite:"none", secure:true});
-            navigate("/createRoom",{state:{roomNumber}});
+            setCookie("room", roomNumber);
+            navigate("/waitingroom",{state:{roomNumber}});
         })
     }
     const joinRoom=()=>{
