@@ -31,6 +31,7 @@ function Home(){
         //backend create a room number. 
         socket.emit("createRoom", cookies.username);
         socket.on("createRoomResponse", (roomNumber)=>{
+            console.log("running");
             setCookie("room", roomNumber);
             navigate("/waitingroom",{state:{roomNumber}});
         })

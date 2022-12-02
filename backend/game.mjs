@@ -3,6 +3,7 @@ import {Mutex, Semaphore, withTimeout} from 'async-mutex';
 //game class
 class Game{
     constructor(io, creator, roomNumber){
+        this.playersScoresMutex=new Mutex();
         this.answersMutex=new Mutex();
         this.guessesMutex=new Mutex();
         this.io=io;
@@ -17,9 +18,11 @@ class Game{
         this.guesses=[]; //[{user1: guess, user2: guess}, {...}]
         this.questionCount=0; //the current question receiving answers
     }
-    addPlayer(name){
+    async addPlayer(name){
+        await this.playersScoresMutex.acquire();
         this.players.push(name);
         this.scores[name]=0;
+        this.playersScoresMutex.release();
     }
     removePlayer(name){
         let idxToRemove=this.players.indexOf(name);
@@ -41,7 +44,9 @@ class Game{
         return new Promise((resolve)=>{
             let countDown=time;
             const id=setInterval(()=>{
-                this.broadcast(socket, "setTimer", countDown);
+                //TODO:
+                // this.broadcast(socket, "setTimer", countDown);
+                this.broadcast(socket, "setTimer", {timeToSet:countDown, roomNum:this.roomNumber});
                 // this.io.to(this.roomNumber).emit("setTimer", countDown)
                 if(countDown==0){
                     clearInterval(id);
@@ -94,7 +99,6 @@ class Game{
             //----------------------Answering phase: send question, send timer----------------------
             this.broadcast(socket, "setQuestion", this.questions[r]);
             await this.startTimer(3, socket);
-            //TODO: wait until all players' answers are recorded
             await this.wait_for_answer(r);
             //pick one answer
             await this.answersMutex.acquire();
@@ -115,25 +119,34 @@ class Game{
             await this.guessesMutex.acquire();
             const guessThisRound=this.guesses[r];
             console.log("Guess this round:", guessThisRound);
+            const isCorrect={};
             const newScore=this.players.reduce((obj, p)=>{
                 if(guessThisRound[p]===this.correctWriters[r]){
                     obj[p]=this.scores[p]+1;
+                    isCorrect[p]=1;
                 }
-                else{obj[p]=this.scores[p];}
+                else{
+                    obj[p]=this.scores[p];
+                    isCorrect[p]=0;
+                }
                 return obj;
             },{})
             this.guessesMutex.release();
             this.scores=newScore;
             console.log("new scores:", this.scores);
-            this.broadcast(socket, "setScores", this.scores);
+            //verify this room is still active. break if not.
+            if(!this.io.sockets.adapter.rooms.get(this.roomNumber)){break;}
             if(r!=round-1){
+                this.broadcast(socket, "setScoresAndDisplay", {scores:this.scores, isCorrect});
+                await (async()=>new Promise(resolve=>setTimeout(resolve, 3000)))(); //wait 3 seconds for frontend to display result
                 this.questionCount++;
                 this.broadcast(socket, "setPhase", "answering");
-            }
+            }            
             else{
-                this.broadcast(socket, "gameEnds");
+                this.broadcast(socket, "gameEnds",{scores:this.scores, isCorrect});
             }
         }
+        return;
     }
 }
 

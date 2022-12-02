@@ -12,6 +12,7 @@ import { useLocation } from "react-router-dom";
 import { SocketContext } from "../context/socket";
 import GameDialogBox from "../components/GameDialogBox"
 import { useCookies } from 'react-cookie';
+import ResultTableModal from "../components/ResultTableModal"
 
 const GamePage=()=>{
     //TODO: handle soket disconnection, user access directly
@@ -31,6 +32,9 @@ const GamePage=()=>{
     const [dialog, setDialog]=useState(false);
     const [answerToGuess, setAnswerToGuess]=useState("");
     const [time, setTime]=useState(0);
+    const [displayResult, setDisplayResult]=useState(false);
+    const [isCorrect, setIsCorrect]=useState({}); //stores whether players' answers in this round are correct. {username: 1, username:0} 
+    const [isEnd, setIsEnd]=useState(false); //is the game end
     //TODO: do not allow direct access:
     //event handlers:
     const handleInput = (event) => {
@@ -64,6 +68,9 @@ const GamePage=()=>{
     }
     //components:
     const SideBarPlayerDiv=(name, score, keyVal)=>{
+        if(name==cookies.username){
+            name="me";
+        }
         return (
             <div className="gameViewPlayerSidebar" key={keyVal}>
                 <div></div>
@@ -78,31 +85,41 @@ const GamePage=()=>{
     socket.on("setPhase", phase=>{
         setSubmitted(false);
         setDialog(false);
+        setDisplayResult(false);
         setSelection("");
         setInput("");
         setPhase(phase);
     })
-    socket.on("setTimer",timeToSet=>{
+    socket.on("setTimer",(res)=>{
+        const {timeToSet,roomNum}=res;
         setTime(timeToSet);
         //if haven't submitted, autosubmit when time is up
         if(timeToSet===0){
             if(!submitted && phase==="answering"){
-                socket.emit("answer", {roomNum: cookies.room, username: cookies.username, answer:input});
+                //TODO: why fired multiple times, why cookies.room value changes
+                // console.log(cookies);
+                socket.emit("answer", {roomNum: roomNum, username: cookies.username, answer:input});
             }
             else if(!submitted && phase==="guessing"){
-                socket.emit("guess", {roomNum: cookies.room, username: cookies.username, guess:selection});
+                socket.emit("guess", {roomNum: roomNum, username: cookies.username, guess:selection});
             }
         }
     })
     socket.on("setAnswerToGuess", answer=>{
         setAnswerToGuess(answer);
     })
-    socket.on("setScores", scores=>{
-        console.log(scores);
+    socket.on("setScoresAndDisplay", res=>{
+        const {scores, isCorrect}=res;
+        setIsCorrect(isCorrect);
         setPlayerScores(scores);
+        setDisplayResult(true);
     })
-    socket.on("gameEnds",()=>{
-        
+    socket.on("gameEnds",(res)=>{
+        const {scores, isCorrect}=res;
+        setIsCorrect(isCorrect);
+        setPlayerScores(scores);
+        setIsEnd(true);
+        setDisplayResult(true);
     })
     return (
         <ThemeProvider theme={myTheme}>
@@ -111,6 +128,7 @@ const GamePage=()=>{
             <p>{time+" seconds"}</p>
         </div>
         <GameDialogBox isOpen={dialog} submitClose={phase=="answering" ? dialogSubmit:dialogSubmitGuess} notNowClose={dialogNotNow}/>
+        {displayResult&& <ResultTableModal players={playerArr} scores={playerScores} isCorrect={isCorrect} isEnd={isEnd}></ResultTableModal>}
         <div id="gameView">
             <div id="gameViewSideBar">
                 <p>Scores:</p>

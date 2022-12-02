@@ -43,9 +43,7 @@ const generateRoom=function(roomDic,username){
         for(let i=0;i<4;i++){
             num+=(Math.floor(Math.random()*10)).toString();
         }
-        if(roomDic.getOwnProeprtyNames && (num in roomDic.getOwnPropertyNames)){
-            continue;
-        }
+        if(num in roomDic){continue;}
         else{
             roomDic[num]=new Game(io, username, num);
             return num;
@@ -64,13 +62,13 @@ const removeUsr=function(roomDic, usernameDic, io, username, roomNum, socket){
     if(io.sockets.adapter.rooms.get(roomNum)){
         //if no player left in the room, remove it
         if(io.sockets.adapter.rooms.get(roomNum)?.size==1){
-            console.log("not broadcasting");
             removeRoom(roomNum);
         }
         //if still players in the room, broadcast to update player number
         else{
-            console.log("broadcasting");
-            io.to(roomNum).emit("updatePlayerNum", io.sockets.adapter.rooms.get(roomNum).size);
+            //TODO: broadcast
+            updatePlayer(socket, roomNum);
+            // io.to(roomNum).emit("updatePlayerNum", io.sockets.adapter.rooms.get(roomNum).size);
         }
     }
     socket.leave(roomNum);
@@ -82,13 +80,14 @@ const removeRoom=function(roomDic, roomNum){
     delete roomDic[roomNum];
 }.bind(null, roomDic)
 
+//take 2 args: socket, roomNum
 //send "updatePlayerNum" and "updatePlayer" signals to all clients in the room
-const updatePlayerF=function (io, socket, roomNum){
+const updatePlayer=function (socket, roomNum){
     socket.emit("updatePlayer", roomDic[roomNum].players);
+    socket.broadcast.to(roomNum).emit("updatePlayer", roomDic[roomNum].players);
 }
 
 io.on("connection", (socket)=>{
-    const updatePlayer=updatePlayerF.bind(null, io, socket);
     socket.leave(socket.id); //each socket is only in one room
     //------------------------- handle creating/joining room --------------------------------
     //return username if the client doesn't have a valid one, otherwise return null
@@ -105,15 +104,16 @@ io.on("connection", (socket)=>{
         console.log("Room created. Current rooms are:",io.sockets.adapter.rooms);
         socket.emit("createRoomResponse", roomNum);
     })
-    socket.on("joinRoom", (req)=>{
+    socket.on("joinRoom", async(req)=>{
         const {username, roomNum}=req;
         //if room exists: join the room, broadcast the player number
         if(io.sockets.adapter.rooms.get(roomNum)){
             socket.join(roomNum.toString());
             socket_Room_Dic[socket.id]=roomNum;
-            roomDic[roomNum].addPlayer(username);
+            const game=roomDic[roomNum];
+            await game.addPlayer(username);
             socket.emit("joinRoom", 1);
-            updatePlayer(roomNum);
+            updatePlayer(socket, roomNum);
             // io.to(roomNum).emit("updatePlayerNum", io.sockets.adapter.rooms.get(roomNum).size);
             console.log("Join successful. Current rooms are",io.sockets.adapter.rooms );
         }
@@ -123,21 +123,21 @@ io.on("connection", (socket)=>{
         }
     })
     socket.on("getPlayer",(roomNum)=>{
-        updatePlayer(roomNum);
+        updatePlayer(socket, roomNum);
     })
     socket.on("updatePlayer", (roomNum)=>{
-        updatePlayer(roomNum);
+        updatePlayer(socket, roomNum);
     })
 
     //------------------------- handle game process --------------------------------
-    socket.on("startGameRequest", (roomNum)=>{
+    socket.on("startGameRequest", async(roomNum)=>{
         socket.broadcast.to(roomNum).emit('startGame');
         socket.emit('startGame');
         // io.of("/").in(roomNum).emit("startGame");
         const room=roomDic[roomNum];
-        room.startGame(3, socket);
+        await room.startGame(1, socket);
+        delete roomDic[roomNum];
     })
-
     socket.on("answer", async(req)=>{
         const {roomNum, username, answer}=req;
         const game=roomDic[roomNum];
@@ -174,10 +174,11 @@ io.on("connection", (socket)=>{
             }
             //if still players in the room, broadcast to update player number
             else{
-                updatePlayer(roomNum);
+                updatePlayer(socket, roomNum);
             }
         }
         socket.leave(roomNum);
+        console.log("Exiting, roomDic:", roomDic);
         console.log("Exited. Current rooms are:",io.sockets.adapter.rooms);
     })
     //IMPORTANT: users will need to join the room again if disconnected.
@@ -195,7 +196,7 @@ io.on("connection", (socket)=>{
             }
             //if still players in the room, broadcast to update player number
             else{
-                updatePlayer(roomNum);
+                updatePlayer(socket, roomNum);
             }
         }
         console.log("Disconnected. Current rooms are:",io.sockets.adapter.rooms);
