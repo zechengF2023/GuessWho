@@ -98,7 +98,7 @@ class Game{
     }
     //TODO: support more rounds
     //start a game 
-    async startGame(round, socket){
+    async startGame(round, inputDuration, socket){
         //get questions
         await this.getQuestions(round);
         for(let r=0;r<round;r++){
@@ -108,7 +108,7 @@ class Game{
         for(let r=0;r<round;r++){
             //----------------------Answering phase: send question, send timer----------------------
             this.broadcast(socket, "setQuestion", this.questions[r]);
-            await this.startTimer(3, socket);
+            await this.startTimer(inputDuration, socket);
             await this.wait_for_answer(r);
             //pick one answer
             await this.answersMutex.acquire();
@@ -123,7 +123,7 @@ class Game{
             //----------------------Guessing phase----------------------
             this.broadcast(socket, "setPhase", "guessing");
             this.broadcast(socket, "setAnswerToGuess", answerToGuess);
-            await this.startTimer(3, socket);
+            await this.startTimer(inputDuration, socket);
             await this.wait_for_guess(r);
             //score answers
             await this.guessesMutex.acquire();

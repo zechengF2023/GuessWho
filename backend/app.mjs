@@ -138,7 +138,7 @@ io.on("connection", (socket)=>{
         socket.emit('startGame');
         // io.of("/").in(roomNum).emit("startGame");
         const room=roomDic[roomNum];
-        await room.startGame(1, socket);
+        await room.startGame(2, 20, socket);
         delete roomDic[roomNum];
         io.in(roomNum).socketsLeave(roomNum);
     })
