@@ -29,7 +29,7 @@ function ResultTableModal(props) {
     const exitGame=()=>{
       navigate("/");
     }
-    let winners=[];
+    let winner_str="";
     //find the winner using scores:{} and players[]
     if(props.isEnd){
       let currHighest=0;
@@ -43,7 +43,11 @@ function ResultTableModal(props) {
           currHighest=score;
         }
       })
-      winners=currWinners;
+      currWinners.forEach((winner, idx)=>{
+        if(idx!=currWinners.length-1){winner_str+=winner+" and ";}
+        else{winner_str+=winner+" ";}
+      });
+      currWinners.length==1 && currWinners[0]!="You" ? winner_str+="wins!" : winner_str+="win!";
     }
     const style = {
         position: 'absolute',
@@ -75,12 +79,7 @@ function ResultTableModal(props) {
             <Box sx={style}>
             <Typography id="modal-modal-title" variant="h6" component="h2" style={{fontWeight:"bold", marginBottom:"1vh"}}>
               {!props.isEnd && "Score board"}
-              {props.isEnd &&
-              winners.map((winner, idx)=>{
-                if(idx==winners.length-1){return winner+" ";}
-                else{return winner+" and ";}
-              })+(winners.length==1 && winners[0]!="You" ? "wins!":"win!")
-              }
+              {props.isEnd && winner_str}
             </Typography>
             <TableContainer style={{maxWidth:"80vw", maxHeight:"70vh"}} component={Paper}>
               <Table stickyHeader  sx={{ minWidth: 650 }} aria-label="simple table">

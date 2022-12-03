@@ -1,5 +1,6 @@
-import {Mutex, Semaphore, withTimeout} from 'async-mutex';
-
+import {Mutex} from 'async-mutex';
+import mongoose from 'mongoose';
+import {QuestionSchema} from "./db.mjs"
 //game class
 class Game{
     constructor(io, creator, roomNumber){
@@ -24,16 +25,24 @@ class Game{
         this.scores[name]=0;
         this.playersScoresMutex.release();
     }
-    removePlayer(name){
+    async removePlayer(name){
+        await this.playersScoresMutex.acquire();
         let idxToRemove=this.players.indexOf(name);
         if(idxToRemove!=-1){
             this.players.splice(idxToRemove, 1);
             delete this.scores[name];
         }
+        this.playersScoresMutex.release();
     }
     //TODO: retrieve n questions from DB
-    getQuestions(n){
-        this.questions=["How old are you?", "Describe your hometown.", "What is your major?"];
+    async getQuestions(n){
+        const Question=mongoose.model("Question", QuestionSchema);
+        const questionObjs=await Question.find().limit(n);
+        const questions=questionObjs.reduce((arr, q)=>{
+            arr.push(q.content);
+            return arr;
+        },[])
+        this.questions=questions;
     }
     broadcast(socket, event, data){
         socket.broadcast.to(this.roomNumber).emit(event, data);
@@ -87,6 +96,7 @@ class Game{
             }, 500);
         })
     }
+    //TODO: support more rounds
     //start a game 
     async startGame(round, socket){
         //get questions

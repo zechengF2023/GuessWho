@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import questions from "./questions.mjs"
 import * as dotenv from 'dotenv' 
 dotenv.config();
 (async()=>{await mongoose.connect(process.env.DB_CONNECTION_STR, {}, (err)=>{if(err)console.log(err);});})()
@@ -16,13 +17,19 @@ const QuestionSchema=new mongoose.Schema({
     content: {type:String,required: true}
 })
 const Question=mongoose.model("Question", QuestionSchema);
-// const Question=mongoose.model("Question");
+//to add questions:
+// (async()=>{
+//     questions.forEach(async(q)=>{
+//         const questionToAdd=new Question({content: q});
+//         const res=await questionToAdd.save();
+//         console.log(res);
+//     })
+// })();
 
 //feeback schema
 const FeedbackSchema=new mongoose.Schema({
     content: {type:String,required: true}
 })
-// mongoose.model("Feedback", FeedbackSchema)
 const Feedback=mongoose.model("Feedback", FeedbackSchema);
 
 async function addFeedback(feedback){
@@ -34,4 +41,4 @@ async function addFeedback(feedback){
 }
 
 // conn.close();
-export {addFeedback} 
+export {addFeedback, QuestionSchema} 

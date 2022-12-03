@@ -50,7 +50,7 @@ function WaitingRoom(){
     }
     socket.on("getPlayer", (playerNames)=>{setPlayerNames(playerNames)});
     socket.on("updatePlayer",(playerNames)=>{setPlayerNames(playerNames)});
-    socket.on("startGame", ()=>{navigate("/game", {state:{playerNames}});})
+    socket.on("startGame", ()=>{navigate("/game", {state:{playerNames}});});
     return (
         <ThemeProvider theme={myTheme}>
         <div id="createPageView">
