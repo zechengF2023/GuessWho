@@ -87,7 +87,7 @@ function ResultTableModal(props) {
                   <TableRow>
                     <TableCell align="left" style={{fontWeight:"bold"}}>Username</TableCell>
                     <TableCell align="left" style={{fontWeight:"bold"}}>Score</TableCell>
-                    <TableCell align="left" style={{fontWeight:"bold"}}>Answer for question {1}</TableCell>
+                    <TableCell align="left" style={{fontWeight:"bold"}}>Answer of previous question</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
