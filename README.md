@@ -79,5 +79,7 @@ An Example User:
 
 (__TODO__: list any tutorials/references/etc. that you've based your code off of)
 
-
+## Things to improve: 
+* wrap all socket event listeners in useEffect, decide what to include in the dependency array
+* improve .broadcast function in Game class
 
